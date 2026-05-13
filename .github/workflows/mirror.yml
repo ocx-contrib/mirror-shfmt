@@ -246,19 +246,19 @@ jobs:
           for VERSION in $(echo "${VERSIONS}" | jq -r '.[].version'); do
             BUNDLE=".bundles/bundle-${VERSION}-${{ matrix.platform_slug }}.tar.xz"
             if [ "${{ matrix.container_id }}" = "_native_" ]; then
-ocx package test --platform "${{ matrix.platform }}" "${BUNDLE}" -- \
-${{ matrix.shell }} -c 'echo "test: ${{ matrix.platform }} native"'
-else
-CONTAINER_ID="${{ matrix.container_id }}"
-IMAGE_TAG="ocx-test-${{ matrix.platform_slug }}-${CONTAINER_ID}:v0.2.1"
-docker run --rm \
--v "${BUNDLE}:/bundle.tar.xz:ro" \
--e OCX_VERSION="${VERSION}" \
--e OCX_PLATFORM="${{ matrix.platform }}" \
--e OCX_IMAGE="${{ matrix.image }}" \
-"${IMAGE_TAG}" \
-${{ matrix.shell }} -c 'ocx package test --platform "${{ matrix.platform }}" /bundle.tar.xz -- echo done'
-fi
+              ocx package test --platform "${{ matrix.platform }}" "${BUNDLE}" -- \
+                ${{ matrix.shell }} -c 'echo "test: ${{ matrix.platform }} native"'
+            else
+              CONTAINER_ID="${{ matrix.container_id }}"
+              IMAGE_TAG="ocx-test-${{ matrix.platform_slug }}-${CONTAINER_ID}:v0.2.1"
+              docker run --rm \
+                -v "${BUNDLE}:/bundle.tar.xz:ro" \
+                -e OCX_VERSION="${VERSION}" \
+                -e OCX_PLATFORM="${{ matrix.platform }}" \
+                -e OCX_IMAGE="${{ matrix.image }}" \
+                "${IMAGE_TAG}" \
+                ${{ matrix.shell }} -c 'ocx package test --platform "${{ matrix.platform }}" /bundle.tar.xz -- echo done'
+            fi
 
           done
       - uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b  # v4
