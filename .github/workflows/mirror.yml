@@ -31,12 +31,11 @@ jobs:
       target: ${{ steps.plan.outputs.target }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
+        with:
+          submodules: recursive
       - name: Install ocx-mirror
         run: |
-          cargo install --git https://github.com/ocx-sh/ocx \
-            --rev "$(cat ocx_mirror_rev.txt 2>/dev/null || echo HEAD)" \
-            --package ocx_mirror \
-            --bin ocx-mirror
+          cargo install --path ocx/crates/ocx_mirror --locked
       - name: Install ocx (host)
         run: |
           set -euo pipefail
@@ -75,12 +74,11 @@ jobs:
         version: ${{ fromJson(needs.discover.outputs.versions) }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
+        with:
+          submodules: recursive
       - name: Install ocx-mirror
         run: |
-          cargo install --git https://github.com/ocx-sh/ocx \
-            --rev "$(cat ocx_mirror_rev.txt 2>/dev/null || echo HEAD)" \
-            --package ocx_mirror \
-            --bin ocx-mirror
+          cargo install --path ocx/crates/ocx_mirror --locked
       - name: Install ocx (host)
         run: |
           set -euo pipefail
@@ -171,6 +169,8 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
+        with:
+          submodules: recursive
       - uses: actions/download-artifact@fa0a91b85d4f404e444306234af5eddbb2a6e890  # v4
         with:
           pattern: bundle-*
@@ -279,6 +279,8 @@ jobs:
       any_red: ${{ steps.summarise.outputs.any_red }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
+        with:
+          submodules: recursive
       - uses: actions/download-artifact@fa0a91b85d4f404e444306234af5eddbb2a6e890  # v4
         with:
           pattern: bundle-*
@@ -291,10 +293,7 @@ jobs:
           merge-multiple: true
       - name: Install ocx-mirror
         run: |
-          cargo install --git https://github.com/ocx-sh/ocx \
-            --rev "$(cat ocx_mirror_rev.txt 2>/dev/null || echo HEAD)" \
-            --package ocx_mirror \
-            --bin ocx-mirror
+          cargo install --path ocx/crates/ocx_mirror --locked
       - name: Install ocx (host)
         run: |
           set -euo pipefail
@@ -351,10 +350,7 @@ jobs:
           name: run-summary
       - name: Install ocx-mirror
         run: |
-          cargo install --git https://github.com/ocx-sh/ocx \
-            --rev "$(cat ocx_mirror_rev.txt 2>/dev/null || echo HEAD)" \
-            --package ocx_mirror \
-            --bin ocx-mirror
+          cargo install --path ocx/crates/ocx_mirror --locked
       - name: Notify
         run: |
           ocx-mirror pipeline notify \

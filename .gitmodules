@@ -1,0 +1,4 @@
+[submodule "ocx"]
+	path = ocx
+	url = git@github.com:ocx-sh/ocx
+	branch = feat/mirror-test-pipeline
