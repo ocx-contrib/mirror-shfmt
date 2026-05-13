@@ -35,7 +35,7 @@ jobs:
         run: |
           cargo install --git https://github.com/ocx-sh/ocx \
             --rev "$(cat ocx_mirror_rev.txt 2>/dev/null || echo HEAD)" \
-            --bin ocx_mirror
+            --bin ocx-mirror
       - name: Install ocx (host)
         run: |
           set -euo pipefail
@@ -78,7 +78,7 @@ jobs:
         run: |
           cargo install --git https://github.com/ocx-sh/ocx \
             --rev "$(cat ocx_mirror_rev.txt 2>/dev/null || echo HEAD)" \
-            --bin ocx_mirror
+            --bin ocx-mirror
       - name: Install ocx (host)
         run: |
           set -euo pipefail
@@ -291,7 +291,7 @@ fi
         run: |
           cargo install --git https://github.com/ocx-sh/ocx \
             --rev "$(cat ocx_mirror_rev.txt 2>/dev/null || echo HEAD)" \
-            --bin ocx_mirror
+            --bin ocx-mirror
       - name: Install ocx (host)
         run: |
           set -euo pipefail
@@ -350,7 +350,7 @@ fi
         run: |
           cargo install --git https://github.com/ocx-sh/ocx \
             --rev "$(cat ocx_mirror_rev.txt 2>/dev/null || echo HEAD)" \
-            --bin ocx_mirror
+            --bin ocx-mirror
       - name: Notify
         run: |
           ocx-mirror pipeline notify \
