@@ -40,7 +40,7 @@ jobs:
         run: |
           set -euo pipefail
           ARCH=$(uname -m)
-          TAG="$v0.2.1"
+          TAG="v0.2.1"
           EXT="tar.xz"
           TARGET="${ARCH}-unknown-linux-gnu"
           if [ -n "${OCX_BINARY_OVERRIDE:-}" ]; then
@@ -83,7 +83,7 @@ jobs:
         run: |
           set -euo pipefail
           ARCH=$(uname -m)
-          TAG="$v0.2.1"
+          TAG="v0.2.1"
           EXT="tar.xz"
           TARGET="${ARCH}-unknown-linux-gnu"
           if [ -n "${OCX_BINARY_OVERRIDE:-}" ]; then
@@ -180,7 +180,7 @@ jobs:
         run: |
           set -euo pipefail
           ARCH=$(uname -m)
-          TAG="$v0.2.1"
+          TAG="v0.2.1"
           case "${RUNNER_OS}" in
             Linux)
               TARGET="${ARCH}-unknown-linux-gnu"
@@ -216,7 +216,7 @@ jobs:
         run: |
           set -euo pipefail
           ARCH=$(uname -m)
-          TAG="$v0.2.1"
+          TAG="v0.2.1"
           if [ -n "${OCX_BINARY_OVERRIDE_MUSL:-}" ]; then
             cp "${OCX_BINARY_OVERRIDE_MUSL}" "${RUNNER_TEMP}/ocx-musl.tar.xz"
           else
@@ -232,7 +232,7 @@ jobs:
           ADD ocx /usr/bin/ocx
           RUN chmod +x /usr/bin/ocx
           DOCKERFILE
-          IMAGE_TAG="ocx-test-${{ matrix.platform_slug }}-${{ matrix.container_id }}:$v0.2.1"
+          IMAGE_TAG="ocx-test-${{ matrix.platform_slug }}-${{ matrix.container_id }}:v0.2.1"
           docker build \
             --build-arg "BASE_IMAGE=${{ matrix.image }}" \
             --tag "${IMAGE_TAG}" \
@@ -244,13 +244,13 @@ jobs:
           set -euo pipefail
           VERSIONS='${{ needs.discover.outputs.versions }}'
           for VERSION in $(echo "${VERSIONS}" | jq -r '.[].version'); do
-            BUNDLE=".bundles/bundle-$0.2.1-${{ matrix.platform_slug }}.tar.xz"
+            BUNDLE=".bundles/bundle-${VERSION}-${{ matrix.platform_slug }}.tar.xz"
             if [ "${{ matrix.container_id }}" = "_native_" ]; then
 ocx package test --platform "${{ matrix.platform }}" "${BUNDLE}" -- \
 ${{ matrix.shell }} -c 'echo "test: ${{ matrix.platform }} native"'
 else
 CONTAINER_ID="${{ matrix.container_id }}"
-IMAGE_TAG="ocx-test-${{ matrix.platform_slug }}-${CONTAINER_ID}:${OCX_MIRROR_RELEASE_TAG}"
+IMAGE_TAG="ocx-test-${{ matrix.platform_slug }}-${CONTAINER_ID}:v0.2.1"
 docker run --rm \
 -v "${BUNDLE}:/bundle.tar.xz:ro" \
 -e OCX_VERSION="${VERSION}" \
@@ -296,7 +296,7 @@ fi
         run: |
           set -euo pipefail
           ARCH=$(uname -m)
-          TAG="$v0.2.1"
+          TAG="v0.2.1"
           EXT="tar.xz"
           TARGET="${ARCH}-unknown-linux-gnu"
           if [ -n "${OCX_BINARY_OVERRIDE:-}" ]; then
@@ -312,6 +312,9 @@ fi
         env:
           GH_TOKEN: ${{ github.token }}
       - name: Push
+        env:
+          OCX_AUTH_OCX_SH_USER: ${{ secrets.OCX_MIRROR_REGISTRY_USER }}
+          OCX_AUTH_OCX_SH_TOKEN: ${{ secrets.OCX_MIRROR_REGISTRY_TOKEN }}
         run: |
           ocx-mirror pipeline push \
             --bundles-dir .artifacts/bundles \
@@ -352,6 +355,6 @@ fi
         run: |
           ocx-mirror pipeline notify \
             --run-summary run-summary.json \
-            --webhook-env-var DISCORD_WEBHOOK_URL
+            --webhook-env-var OCX_MIRROR_DISCORD_HOOK
         env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          OCX_MIRROR_DISCORD_HOOK: ${{ secrets.OCX_MIRROR_DISCORD_HOOK }}
