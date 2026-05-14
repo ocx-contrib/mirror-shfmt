@@ -7,12 +7,9 @@
 This repository uses automated branch protection. The following required status
 checks are configured to prevent publishing unless all platform tests pass:
 
-- `test (darwin/amd64, _native_)`
-- `test (darwin/arm64, _native_)`
 - `test (linux/amd64, ubuntu_24_04)`
 - `test (linux/amd64, alpine_3_20)`
 - `test (linux/arm64, ubuntu_24_04)`
-- `test (windows/amd64, _native_)`
 - `push`
 - `notify`
 

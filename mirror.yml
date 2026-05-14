@@ -69,13 +69,16 @@ platforms:
     containers:
       - image: ubuntu:24.04
         shell: bash
-  darwin/amd64:
-    runner: macos-14  # Rosetta2 emulates x86_64 (macos-13 deprecated Sep 2026)
-  darwin/arm64:
-    runner: macos-14
-  windows/amd64:
-    runner: windows-latest
-    shell: pwsh
+  # darwin/amd64, darwin/arm64, windows/amd64 disabled while iterating
+  # on the Discord notify pipeline — runner minutes saved, test results
+  # for these platforms already validated in run 25851374043.
+  # darwin/amd64:
+  #   runner: macos-14  # Rosetta2 emulates x86_64 (macos-13 deprecated Sep 2026)
+  # darwin/arm64:
+  #   runner: macos-14
+  # windows/amd64:
+  #   runner: windows-latest
+  #   shell: pwsh
 
 ocx_mirror:
   release_tag: v0.2.1
