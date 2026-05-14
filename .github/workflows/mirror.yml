@@ -113,6 +113,15 @@ jobs:
             tests:
               - name: version
                 command: shfmt --version
+          - platform: linux/amd64
+            platform_slug: linux_amd64
+            runner: ubuntu-latest
+            container_id: alpine_3_20
+            image: alpine:3.20
+            shell: sh
+            tests:
+              - name: version
+                command: shfmt --version
           - platform: linux/arm64
             platform_slug: linux_arm64
             runner: ubuntu-24.04-arm
@@ -166,13 +175,26 @@ jobs:
           set -euo pipefail
           cargo install --path ocx/crates/ocx_cli --locked --root "${RUNNER_TEMP}/ocx-host"
           echo "${RUNNER_TEMP}/ocx-host/bin" >> "${GITHUB_PATH}"
+      - name: Build ocx for musl (container)
+        if: matrix.container_id != '_native_'
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Static musl binary works on both glibc (ubuntu) and musl (alpine) containers.
+          MUSL_TARGET="$(uname -m)-unknown-linux-musl"
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends musl-tools
+          rustup target add "${MUSL_TARGET}"
+          cargo install --path ocx/crates/ocx_cli --locked \
+            --target "${MUSL_TARGET}" \
+            --root "${RUNNER_TEMP}/ocx-musl"
       - name: Inject ocx into container image
         if: matrix.container_id != '_native_'
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p "${RUNNER_TEMP}/ocx-container-ctx"
-          cp "${RUNNER_TEMP}/ocx-host/bin/ocx" "${RUNNER_TEMP}/ocx-container-ctx/ocx"
+          cp "${RUNNER_TEMP}/ocx-musl/bin/ocx" "${RUNNER_TEMP}/ocx-container-ctx/ocx"
           cat > "${RUNNER_TEMP}/ocx-container-ctx/Dockerfile" <<'DOCKERFILE'
           ARG BASE_IMAGE
           FROM ${BASE_IMAGE}
