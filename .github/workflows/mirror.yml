@@ -122,6 +122,14 @@ jobs:
             tests:
               - name: version
                 command: shfmt --version
+          - platform: windows/amd64
+            platform_slug: windows_amd64
+            runner: windows-latest
+            container_id: _native_
+            shell: pwsh
+            tests:
+              - name: version
+                command: shfmt --version
 
     runs-on: ${{ matrix.runner }}
     steps:

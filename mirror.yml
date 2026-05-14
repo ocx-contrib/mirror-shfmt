@@ -55,8 +55,8 @@ tests:
     command: shfmt --version
 
 platforms:
-  # Stage B: linux/amd64 + linux/arm64 ubuntu containers. Other platforms
-  # re-enabled incrementally as each stage proves green.
+  # Stage C: linux/{amd64,arm64} containers + windows/amd64 native.
+  # Remaining platforms (darwin/*, alpine) re-enabled in later stages.
   linux/amd64:
     runner: ubuntu-latest
     containers:
@@ -67,6 +67,9 @@ platforms:
     containers:
       - image: ubuntu:24.04
         shell: bash
+  windows/amd64:
+    runner: windows-latest
+    shell: pwsh
 
 ocx_mirror:
   release_tag: v0.2.1
