@@ -171,7 +171,7 @@ jobs:
           for VERSION in $(echo "${VERSIONS}" | jq -r '.[].version'); do
             BUNDLE=".bundles/bundle-${VERSION}-${{ matrix.platform_slug }}.tar.xz"
             if [ "${{ matrix.container_id }}" = "_native_" ]; then
-              ocx package test --platform "${{ matrix.platform }}" "${BUNDLE}" -- \
+              ocx package test --platform "${{ matrix.platform }}" --identifier "ocx.sh/shfmt:${VERSION}" "${BUNDLE}" -- \
                 ${{ matrix.shell }} -c 'echo "test: ${{ matrix.platform }} native"'
             else
               CONTAINER_ID="${{ matrix.container_id }}"
@@ -182,7 +182,7 @@ jobs:
                 -e OCX_PLATFORM="${{ matrix.platform }}" \
                 -e OCX_IMAGE="${{ matrix.image }}" \
                 "${IMAGE_TAG}" \
-                ${{ matrix.shell }} -c 'ocx package test --platform "${{ matrix.platform }}" /bundle.tar.xz -- echo done'
+                ${{ matrix.shell }} -c 'ocx package test --platform "${{ matrix.platform }}" --identifier "ocx.sh/shfmt:${VERSION}" /bundle.tar.xz -- echo done'
             fi
 
           done
