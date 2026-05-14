@@ -55,24 +55,13 @@ tests:
     command: shfmt --version
 
 platforms:
+  # Stage A: linux/amd64 ubuntu container only. Other platforms re-enabled
+  # incrementally as each stage proves green.
   linux/amd64:
     runner: ubuntu-latest
     containers:
       - image: ubuntu:24.04
         shell: bash
-      # alpine:3.20 dropped temporarily — musl ocx binary cross-compile not wired yet
-  linux/arm64:
-    runner: ubuntu-24.04-arm
-    containers:
-      - image: ubuntu:24.04
-        shell: bash
-  darwin/amd64:
-    runner: macos-14  # Rosetta2 emulates x86_64 (macos-13 deprecated Sep 2026)
-  darwin/arm64:
-    runner: macos-14
-  windows/amd64:
-    runner: windows-latest
-    shell: pwsh
 
 ocx_mirror:
   release_tag: v0.2.1
