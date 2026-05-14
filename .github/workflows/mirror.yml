@@ -294,7 +294,12 @@ jobs:
 
   push:
     needs: [discover, prepare, test]
-    if: needs.discover.outputs.has_new == 'true'
+    # `if: always()` keeps push running even when the `test` job is marked
+    # failed (any matrix leg red). The push step gates per-(V, P) on JUnit
+    # results: greens publish, reds are skipped. Without `always()` a single
+    # failed test leg short-circuits the whole job and prevents partial
+    # publication + notification.
+    if: always() && needs.discover.outputs.has_new == 'true'
     runs-on: ubuntu-latest
     outputs:
       any_new_green: ${{ steps.summarise.outputs.any_new_green }}
