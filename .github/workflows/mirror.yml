@@ -78,25 +78,23 @@ jobs:
           echo "${RUNNER_TEMP}/ocx-host/bin" >> "${GITHUB_PATH}"
       - name: Prepare ${{ matrix.version.version }}
         run: |
-          set -euxo pipefail
-          ocx-mirror pipeline prepare --version "${{ matrix.version.version }}" -l debug
+          set -euo pipefail
+          ocx-mirror pipeline prepare --version "${{ matrix.version.version }}"
+          # Flatten .ocx-mirror/{V}/{P}/bundle.tar.xz → bundles/bundle-{V}-{P_slug}.tar.xz
+          # and copy spec-level metadata.json as sibling so `ocx package test`
+          # auto-discovers it via its bundle→metadata sibling convention.
           V="${{ matrix.version.version }}"
-          echo "=== prepare wrote ==="
-          find ".ocx-mirror/${V}" -maxdepth 2 -type f 2>&1 || true
-          # Flatten .ocx-mirror/{V}/{P}/bundle.tar.xz → .bundles/bundle-{V}-{P_slug}.tar.xz
-          mkdir -p .bundles
+          mkdir -p bundles
           shopt -s nullglob
           for platform_dir in ".ocx-mirror/${V}"/*/; do
             P_SLUG=$(basename "${platform_dir}")
-            cp "${platform_dir}bundle.tar.xz" ".bundles/bundle-${V}-${P_SLUG}.tar.xz"
-            cp metadata.json ".bundles/bundle-${V}-${P_SLUG}-metadata.json"
+            cp "${platform_dir}bundle.tar.xz" "bundles/bundle-${V}-${P_SLUG}.tar.xz"
+            cp metadata.json "bundles/bundle-${V}-${P_SLUG}-metadata.json"
           done
-          echo "=== .bundles contents ==="
-          ls -la .bundles/
       - uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b  # v4
         with:
           name: bundle-${{ matrix.version.version }}
-          path: .bundles/
+          path: bundles/
           retention-days: 1
 
   test:
@@ -127,7 +125,7 @@ jobs:
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4
         with:
           pattern: bundle-*
-          path: .bundles/
+          path: bundles/
           merge-multiple: true
       - name: Install ocx (host/native)
         shell: bash
@@ -164,7 +162,7 @@ jobs:
           set -euo pipefail
           VERSIONS='${{ needs.discover.outputs.versions }}'
           for VERSION in $(echo "${VERSIONS}" | jq -r '.[].version'); do
-            BUNDLE=".bundles/bundle-${VERSION}-${{ matrix.platform_slug }}.tar.xz"
+            BUNDLE="bundles/bundle-${VERSION}-${{ matrix.platform_slug }}.tar.xz"
             METADATA_SIBLING="${BUNDLE%.tar.xz}-metadata.json"
             if [ "${{ matrix.container_id }}" = "_native_" ]; then
               ocx package test --platform "${{ matrix.platform }}" --identifier "ocx.sh/shfmt:${VERSION}" "${BUNDLE}" -- \
