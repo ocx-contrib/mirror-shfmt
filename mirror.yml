@@ -55,8 +55,8 @@ tests:
     command: shfmt --version
 
 platforms:
-  # Stage C: linux/{amd64,arm64} containers + windows/amd64 native.
-  # Remaining platforms (darwin/*, alpine) re-enabled in later stages.
+  # Stage D: all 4 native platforms + linux containers. Alpine container
+  # leg added in Stage E (musl cross-compile).
   linux/amd64:
     runner: ubuntu-latest
     containers:
@@ -67,6 +67,10 @@ platforms:
     containers:
       - image: ubuntu:24.04
         shell: bash
+  darwin/amd64:
+    runner: macos-14  # Rosetta2 emulates x86_64 (macos-13 deprecated Sep 2026)
+  darwin/arm64:
+    runner: macos-14
   windows/amd64:
     runner: windows-latest
     shell: pwsh
