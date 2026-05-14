@@ -14,12 +14,17 @@ assets:
     - "shfmt_v.*_linux_amd64$"
   linux/arm64:
     - "shfmt_v.*_linux_arm64$"
-  darwin/amd64:
-    - "shfmt_v.*_darwin_amd64$"
-  darwin/arm64:
-    - "shfmt_v.*_darwin_arm64$"
-  windows/amd64:
-    - "shfmt_v.*_windows_amd64\\.exe$"
+  # darwin/amd64, darwin/arm64, windows/amd64 disabled while iterating;
+  # plan/prepare/push key off `assets:` so dropping them here is what
+  # actually saves runner minutes (commenting in `platforms:` alone left
+  # the prepare matrix still emitting bundles, which push then flagged as
+  # `missing_junit`). Re-enable in lockstep with the `platforms:` block.
+  # darwin/amd64:
+  #   - "shfmt_v.*_darwin_amd64$"
+  # darwin/arm64:
+  #   - "shfmt_v.*_darwin_arm64$"
+  # windows/amd64:
+  #   - "shfmt_v.*_windows_amd64\\.exe$"
 
 asset_type:
   type: binary
