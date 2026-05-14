@@ -1,39 +1,18 @@
 ---
-name: shfmt
-summary: Shell script formatter — POSIX, Bash, mksh
-homepage: https://github.com/mvdan/sh
-license: BSD-3-Clause
+title: shfmt
+description: A shell parser, formatter, and interpreter with bash and zsh support
+keywords: shfmt,shell,bash,zsh,formatter,parser,sh,format
 ---
 
 # shfmt
 
-`shfmt` formats shell programs. Supports POSIX shell, Bash, and mksh.
-Authored by [Daniel Martí](https://mvdan.cc/) and mirrored to
-[`ocx.sh/shfmt`](https://ocx.sh/shfmt) from
-[mvdan/sh](https://github.com/mvdan/sh) GitHub releases.
+shfmt is a shell parser, formatter, and interpreter. It supports POSIX shell, Bash, and mksh. As a formatter, it ensures consistent style across shell scripts with configurable options for indentation, binary operators, and other style choices. It can also be used as a library for shell script parsing and manipulation.
 
-## Install
+## What's included
 
-```sh
-ocx install shfmt
-```
+- **shfmt** — shell script formatter and parser
 
-## Usage
+## Links
 
-```sh
-shfmt -d script.sh         # diff-style suggestions
-shfmt -w script.sh         # rewrite in place
-shfmt --version
-```
-
-## Versioning
-
-Mirrors `vX.Y.Z` tags from upstream as `X.Y.Z` (cascade aliases `X.Y`, `X`,
-`latest`). Pre-releases skipped. New versions land within ~6 hours of
-upstream release.
-
-## Source
-
-- Upstream repo: <https://github.com/mvdan/sh>
-- Mirror config: [`mirror.yml`](./mirror.yml)
-- Pipeline status: see this repo's Actions tab
+- [shfmt Documentation](https://pkg.go.dev/mvdan.cc/sh/v3)
+- [shfmt on GitHub](https://github.com/mvdan/sh)
