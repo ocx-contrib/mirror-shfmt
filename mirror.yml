@@ -39,7 +39,10 @@ build_timestamp: none
 
 versions:
   min: "3.5.0"
-  new_per_run: 1
+  # Bumped from 1 → 5 so a single run backfills the most recent five
+  # versions; subsequent runs trickle older ones in via `backfill: newest_first`
+  # (default). Saves chunks of round-trip latency while still bounded.
+  new_per_run: 5
   poll_interval: "0 */6 * * *"
 
 verify:
