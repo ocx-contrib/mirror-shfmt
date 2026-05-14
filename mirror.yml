@@ -14,17 +14,12 @@ assets:
     - "shfmt_v.*_linux_amd64$"
   linux/arm64:
     - "shfmt_v.*_linux_arm64$"
-  # darwin/amd64, darwin/arm64, windows/amd64 disabled while iterating;
-  # plan/prepare/push key off `assets:` so dropping them here is what
-  # actually saves runner minutes (commenting in `platforms:` alone left
-  # the prepare matrix still emitting bundles, which push then flagged as
-  # `missing_junit`). Re-enable in lockstep with the `platforms:` block.
-  # darwin/amd64:
-  #   - "shfmt_v.*_darwin_amd64$"
-  # darwin/arm64:
-  #   - "shfmt_v.*_darwin_arm64$"
-  # windows/amd64:
-  #   - "shfmt_v.*_windows_amd64\\.exe$"
+  darwin/amd64:
+    - "shfmt_v.*_darwin_amd64$"
+  darwin/arm64:
+    - "shfmt_v.*_darwin_arm64$"
+  windows/amd64:
+    - "shfmt_v.*_windows_amd64\\.exe$"
 
 asset_type:
   type: binary
@@ -63,8 +58,9 @@ tests:
     command: shfmt --version
 
 platforms:
-  # Stage D: all 4 native platforms + linux containers. Alpine container
-  # leg added in Stage E (musl cross-compile).
+  # All 4 native platforms + linux containers. Alpine container leg covers
+  # the musl-libc surface; macos-14 carries Rosetta2 to emulate x86_64
+  # (macos-13 deprecated Sep 2026).
   linux/amd64:
     runner: ubuntu-latest
     containers:
@@ -77,16 +73,13 @@ platforms:
     containers:
       - image: ubuntu:24.04
         shell: bash
-  # darwin/amd64, darwin/arm64, windows/amd64 disabled while iterating
-  # on the Discord notify pipeline — runner minutes saved, test results
-  # for these platforms already validated in run 25851374043.
-  # darwin/amd64:
-  #   runner: macos-14  # Rosetta2 emulates x86_64 (macos-13 deprecated Sep 2026)
-  # darwin/arm64:
-  #   runner: macos-14
-  # windows/amd64:
-  #   runner: windows-latest
-  #   shell: pwsh
+  darwin/amd64:
+    runner: macos-14
+  darwin/arm64:
+    runner: macos-14
+  windows/amd64:
+    runner: windows-latest
+    shell: pwsh
 
 ocx_mirror:
   release_tag: v0.2.1

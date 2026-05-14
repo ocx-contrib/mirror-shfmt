@@ -105,6 +105,22 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - platform: darwin/amd64
+            platform_slug: darwin_amd64
+            runner: macos-14
+            container_id: _native_
+            shell: bash
+            tests:
+              - name: version
+                command: shfmt --version
+          - platform: darwin/arm64
+            platform_slug: darwin_arm64
+            runner: macos-14
+            container_id: _native_
+            shell: bash
+            tests:
+              - name: version
+                command: shfmt --version
           - platform: linux/amd64
             platform_slug: linux_amd64
             runner: ubuntu-latest
@@ -129,6 +145,14 @@ jobs:
             container_id: ubuntu_24_04
             image: ubuntu:24.04
             shell: bash
+            tests:
+              - name: version
+                command: shfmt --version
+          - platform: windows/amd64
+            platform_slug: windows_amd64
+            runner: windows-latest
+            container_id: _native_
+            shell: pwsh
             tests:
               - name: version
                 command: shfmt --version
@@ -373,8 +397,6 @@ jobs:
           cargo install --path ocx/crates/ocx_mirror --locked
       - name: Notify
         run: |
-          ocx-mirror pipeline notify \
-            --run-summary run-summary.json \
-            --webhook-env-var OCX_MIRROR_DISCORD_HOOK
+          ocx-mirror pipeline notify --run-summary run-summary.json
         env:
           OCX_MIRROR_DISCORD_HOOK: ${{ secrets.OCX_MIRROR_DISCORD_HOOK }}

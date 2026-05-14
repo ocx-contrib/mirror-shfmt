@@ -16,7 +16,7 @@ REPO="${GITHUB_REPOSITORY:-$(gh repo view --json nameWithOwner -q .nameWithOwner
 
 echo "Installing branch protection on ${REPO}..."
 
-REQUIRED_CHECKS='[{"context": "test (linux/amd64, ubuntu_24_04)"}, {"context": "test (linux/amd64, alpine_3_20)"}, {"context": "test (linux/arm64, ubuntu_24_04)"}, {"context": "push"}, {"context": "notify"}]'
+REQUIRED_CHECKS='[{"context": "test (darwin/amd64, _native_)"}, {"context": "test (darwin/arm64, _native_)"}, {"context": "test (linux/amd64, ubuntu_24_04)"}, {"context": "test (linux/amd64, alpine_3_20)"}, {"context": "test (linux/arm64, ubuntu_24_04)"}, {"context": "test (windows/amd64, _native_)"}, {"context": "push"}, {"context": "notify"}]'
 
 gh api \
     --method PUT \
