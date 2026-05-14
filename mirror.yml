@@ -55,10 +55,15 @@ tests:
     command: shfmt --version
 
 platforms:
-  # Stage A: linux/amd64 ubuntu container only. Other platforms re-enabled
-  # incrementally as each stage proves green.
+  # Stage B: linux/amd64 + linux/arm64 ubuntu containers. Other platforms
+  # re-enabled incrementally as each stage proves green.
   linux/amd64:
     runner: ubuntu-latest
+    containers:
+      - image: ubuntu:24.04
+        shell: bash
+  linux/arm64:
+    runner: ubuntu-24.04-arm
     containers:
       - image: ubuntu:24.04
         shell: bash
