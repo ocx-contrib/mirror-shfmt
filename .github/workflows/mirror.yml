@@ -78,19 +78,21 @@ jobs:
           echo "${RUNNER_TEMP}/ocx-host/bin" >> "${GITHUB_PATH}"
       - name: Prepare ${{ matrix.version.version }}
         run: |
-          set -euo pipefail
-          ocx-mirror pipeline prepare --version "${{ matrix.version.version }}"
-          # Flatten .ocx-mirror/{V}/{P}/bundle.tar.xz → .bundles/bundle-{V}-{P_slug}.tar.xz
-          # and copy spec-level metadata.json as sibling so `ocx package test`
-          # auto-discovers it via its bundle→metadata sibling convention.
+          set -euxo pipefail
+          ocx-mirror pipeline prepare --version "${{ matrix.version.version }}" -l debug
           V="${{ matrix.version.version }}"
+          echo "=== prepare wrote ==="
+          find ".ocx-mirror/${V}" -maxdepth 2 -type f 2>&1 || true
+          # Flatten .ocx-mirror/{V}/{P}/bundle.tar.xz → .bundles/bundle-{V}-{P_slug}.tar.xz
           mkdir -p .bundles
+          shopt -s nullglob
           for platform_dir in ".ocx-mirror/${V}"/*/; do
-            [ -d "${platform_dir}" ] || continue
             P_SLUG=$(basename "${platform_dir}")
             cp "${platform_dir}bundle.tar.xz" ".bundles/bundle-${V}-${P_SLUG}.tar.xz"
             cp metadata.json ".bundles/bundle-${V}-${P_SLUG}-metadata.json"
           done
+          echo "=== .bundles contents ==="
+          ls -la .bundles/
       - uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b  # v4
         with:
           name: bundle-${{ matrix.version.version }}
