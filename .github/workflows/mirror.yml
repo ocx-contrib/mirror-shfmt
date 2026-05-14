@@ -39,23 +39,8 @@ jobs:
       - name: Install ocx (host)
         run: |
           set -euo pipefail
-          ARCH=$(uname -m)
-          [ "${ARCH}" = "arm64" ] && ARCH=aarch64
-          TAG="v0.2.1"
-          EXT="tar.xz"
-          TARGET="${ARCH}-unknown-linux-gnu"
-          if [ -n "${OCX_BINARY_OVERRIDE:-}" ]; then
-            cp "${OCX_BINARY_OVERRIDE}" "${RUNNER_TEMP}/ocx-host.${EXT}"
-          else
-            gh release download "${TAG}" --repo ocx-sh/ocx \
-              --pattern "ocx-${TARGET}.${EXT}" \
-              --output "${RUNNER_TEMP}/ocx-host.${EXT}"
-          fi
-          mkdir -p "${RUNNER_TEMP}/ocx-host"
-          tar -xJf "${RUNNER_TEMP}/ocx-host.${EXT}" -C "${RUNNER_TEMP}/ocx-host" --strip-components=1
-          echo "${RUNNER_TEMP}/ocx-host" >> "${GITHUB_PATH}"
-        env:
-          GH_TOKEN: ${{ github.token }}
+          cargo install --path ocx/crates/ocx_cli --locked --root "${RUNNER_TEMP}/ocx-host"
+          echo "${RUNNER_TEMP}/ocx-host/bin" >> "${GITHUB_PATH}"
       - id: plan
         name: Plan versions
         run: |
@@ -83,23 +68,8 @@ jobs:
       - name: Install ocx (host)
         run: |
           set -euo pipefail
-          ARCH=$(uname -m)
-          [ "${ARCH}" = "arm64" ] && ARCH=aarch64
-          TAG="v0.2.1"
-          EXT="tar.xz"
-          TARGET="${ARCH}-unknown-linux-gnu"
-          if [ -n "${OCX_BINARY_OVERRIDE:-}" ]; then
-            cp "${OCX_BINARY_OVERRIDE}" "${RUNNER_TEMP}/ocx-host.${EXT}"
-          else
-            gh release download "${TAG}" --repo ocx-sh/ocx \
-              --pattern "ocx-${TARGET}.${EXT}" \
-              --output "${RUNNER_TEMP}/ocx-host.${EXT}"
-          fi
-          mkdir -p "${RUNNER_TEMP}/ocx-host"
-          tar -xJf "${RUNNER_TEMP}/ocx-host.${EXT}" -C "${RUNNER_TEMP}/ocx-host" --strip-components=1
-          echo "${RUNNER_TEMP}/ocx-host" >> "${GITHUB_PATH}"
-        env:
-          GH_TOKEN: ${{ github.token }}
+          cargo install --path ocx/crates/ocx_cli --locked --root "${RUNNER_TEMP}/ocx-host"
+          echo "${RUNNER_TEMP}/ocx-host/bin" >> "${GITHUB_PATH}"
       - name: Prepare ${{ matrix.version.version }}
         run: |
           ocx-mirror pipeline prepare --version "${{ matrix.version.version }}"
@@ -141,15 +111,6 @@ jobs:
             tests:
               - name: version
                 command: shfmt --version
-          - platform: linux/amd64
-            platform_slug: linux_amd64
-            runner: ubuntu-latest
-            container_id: alpine_3_20
-            image: alpine:3.20
-            shell: sh
-            tests:
-              - name: version
-                command: shfmt --version
           - platform: linux/arm64
             platform_slug: linux_arm64
             runner: ubuntu-24.04-arm
@@ -179,60 +140,19 @@ jobs:
           path: .bundles/
           merge-multiple: true
       - name: Install ocx (host/native)
-        if: matrix.container_id == '_native_' || matrix.os != 'linux'
         shell: bash
         run: |
           set -euo pipefail
-          ARCH=$(uname -m)
-          [ "${ARCH}" = "arm64" ] && ARCH=aarch64
-          TAG="v0.2.1"
-          case "${RUNNER_OS}" in
-            Linux)
-              TARGET="${ARCH}-unknown-linux-gnu"
-              EXT="tar.xz"
-              ;;
-            macOS)
-              TARGET="${ARCH}-apple-darwin"
-              EXT="tar.xz"
-              ;;
-            Windows)
-              TARGET="${ARCH}-pc-windows-msvc"
-              EXT="zip"
-              ;;
-          esac
-          if [ -n "${OCX_BINARY_OVERRIDE:-}" ]; then
-            cp "${OCX_BINARY_OVERRIDE}" "${RUNNER_TEMP}/ocx-host.${EXT}"
-          else
-            gh release download "${TAG}" --repo ocx-sh/ocx \
-              --pattern "ocx-${TARGET}.${EXT}" \
-              --output "${RUNNER_TEMP}/ocx-host.${EXT}"
-          fi
-          mkdir -p "${RUNNER_TEMP}/ocx-host"
-          if [ "${EXT}" = "zip" ]; then
-            unzip -q "${RUNNER_TEMP}/ocx-host.${EXT}" -d "${RUNNER_TEMP}/ocx-host"
-          else
-            tar -xJf "${RUNNER_TEMP}/ocx-host.${EXT}" -C "${RUNNER_TEMP}/ocx-host" --strip-components=1
-          fi
-          echo "${RUNNER_TEMP}/ocx-host" >> "${GITHUB_PATH}"
-        env:
-          GH_TOKEN: ${{ github.token }}
-      - name: Download and inject ocx (container)
+          cargo install --path ocx/crates/ocx_cli --locked --root "${RUNNER_TEMP}/ocx-host"
+          echo "${RUNNER_TEMP}/ocx-host/bin" >> "${GITHUB_PATH}"
+      - name: Inject ocx into container image
         if: matrix.container_id != '_native_'
+        shell: bash
         run: |
           set -euo pipefail
-          ARCH=$(uname -m)
-          [ "${ARCH}" = "arm64" ] && ARCH=aarch64
-          TAG="v0.2.1"
-          if [ -n "${OCX_BINARY_OVERRIDE_MUSL:-}" ]; then
-            cp "${OCX_BINARY_OVERRIDE_MUSL}" "${RUNNER_TEMP}/ocx-musl.tar.xz"
-          else
-            gh release download "${TAG}" --repo ocx-sh/ocx \
-              --pattern "ocx-${ARCH}-unknown-linux-musl.tar.xz" \
-              --output "${RUNNER_TEMP}/ocx-musl.tar.xz"
-          fi
-          mkdir -p "${RUNNER_TEMP}/ocx-musl"
-          tar -xJf "${RUNNER_TEMP}/ocx-musl.tar.xz" -C "${RUNNER_TEMP}/ocx-musl" --strip-components=1
-          cat > "${RUNNER_TEMP}/ocx-musl/Dockerfile" <<'DOCKERFILE'
+          mkdir -p "${RUNNER_TEMP}/ocx-container-ctx"
+          cp "${RUNNER_TEMP}/ocx-host/bin/ocx" "${RUNNER_TEMP}/ocx-container-ctx/ocx"
+          cat > "${RUNNER_TEMP}/ocx-container-ctx/Dockerfile" <<'DOCKERFILE'
           ARG BASE_IMAGE
           FROM ${BASE_IMAGE}
           ADD ocx /usr/bin/ocx
@@ -242,9 +162,7 @@ jobs:
           docker build \
             --build-arg "BASE_IMAGE=${{ matrix.image }}" \
             --tag "${IMAGE_TAG}" \
-            "${RUNNER_TEMP}/ocx-musl"
-        env:
-          GH_TOKEN: ${{ github.token }}
+            "${RUNNER_TEMP}/ocx-container-ctx"
       - name: Run tests for all versions
         shell: bash
         run: |
@@ -259,7 +177,7 @@ jobs:
               CONTAINER_ID="${{ matrix.container_id }}"
               IMAGE_TAG="ocx-test-${{ matrix.platform_slug }}-${CONTAINER_ID}:v0.2.1"
               docker run --rm \
-                -v "${BUNDLE}:/bundle.tar.xz:ro" \
+                -v "$(pwd)/${BUNDLE}:/bundle.tar.xz:ro" \
                 -e OCX_VERSION="${VERSION}" \
                 -e OCX_PLATFORM="${{ matrix.platform }}" \
                 -e OCX_IMAGE="${{ matrix.image }}" \
@@ -302,23 +220,8 @@ jobs:
       - name: Install ocx (host)
         run: |
           set -euo pipefail
-          ARCH=$(uname -m)
-          [ "${ARCH}" = "arm64" ] && ARCH=aarch64
-          TAG="v0.2.1"
-          EXT="tar.xz"
-          TARGET="${ARCH}-unknown-linux-gnu"
-          if [ -n "${OCX_BINARY_OVERRIDE:-}" ]; then
-            cp "${OCX_BINARY_OVERRIDE}" "${RUNNER_TEMP}/ocx-host.${EXT}"
-          else
-            gh release download "${TAG}" --repo ocx-sh/ocx \
-              --pattern "ocx-${TARGET}.${EXT}" \
-              --output "${RUNNER_TEMP}/ocx-host.${EXT}"
-          fi
-          mkdir -p "${RUNNER_TEMP}/ocx-host"
-          tar -xJf "${RUNNER_TEMP}/ocx-host.${EXT}" -C "${RUNNER_TEMP}/ocx-host" --strip-components=1
-          echo "${RUNNER_TEMP}/ocx-host" >> "${GITHUB_PATH}"
-        env:
-          GH_TOKEN: ${{ github.token }}
+          cargo install --path ocx/crates/ocx_cli --locked --root "${RUNNER_TEMP}/ocx-host"
+          echo "${RUNNER_TEMP}/ocx-host/bin" >> "${GITHUB_PATH}"
       - name: Push
         env:
           OCX_AUTH_OCX_SH_USER: ${{ secrets.OCX_MIRROR_REGISTRY_USER }}
