@@ -78,7 +78,19 @@ jobs:
           echo "${RUNNER_TEMP}/ocx-host/bin" >> "${GITHUB_PATH}"
       - name: Prepare ${{ matrix.version.version }}
         run: |
+          set -euo pipefail
           ocx-mirror pipeline prepare --version "${{ matrix.version.version }}"
+          # Flatten .ocx-mirror/{V}/{P}/bundle.tar.xz → .bundles/bundle-{V}-{P_slug}.tar.xz
+          # and copy spec-level metadata.json as sibling so `ocx package test`
+          # auto-discovers it via its bundle→metadata sibling convention.
+          V="${{ matrix.version.version }}"
+          mkdir -p .bundles
+          for platform_dir in ".ocx-mirror/${V}"/*/; do
+            [ -d "${platform_dir}" ] || continue
+            P_SLUG=$(basename "${platform_dir}")
+            cp "${platform_dir}bundle.tar.xz" ".bundles/bundle-${V}-${P_SLUG}.tar.xz"
+            cp metadata.json ".bundles/bundle-${V}-${P_SLUG}-metadata.json"
+          done
       - uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b  # v4
         with:
           name: bundle-${{ matrix.version.version }}
@@ -151,6 +163,7 @@ jobs:
           VERSIONS='${{ needs.discover.outputs.versions }}'
           for VERSION in $(echo "${VERSIONS}" | jq -r '.[].version'); do
             BUNDLE=".bundles/bundle-${VERSION}-${{ matrix.platform_slug }}.tar.xz"
+            METADATA_SIBLING="${BUNDLE%.tar.xz}-metadata.json"
             if [ "${{ matrix.container_id }}" = "_native_" ]; then
               ocx package test --platform "${{ matrix.platform }}" --identifier "ocx.sh/shfmt:${VERSION}" "${BUNDLE}" -- \
                 ${{ matrix.shell }} -c 'echo "test: ${{ matrix.platform }} native"'
@@ -159,6 +172,7 @@ jobs:
               IMAGE_TAG="ocx-test-${{ matrix.platform_slug }}-${CONTAINER_ID}:v0.2.1"
               docker run --rm \
                 -v "$(pwd)/${BUNDLE}:/bundle.tar.xz:ro" \
+                -v "$(pwd)/${METADATA_SIBLING}:/bundle-metadata.json:ro" \
                 -e OCX_VERSION="${VERSION}" \
                 -e OCX_PLATFORM="${{ matrix.platform }}" \
                 -e OCX_IMAGE="${{ matrix.image }}" \
