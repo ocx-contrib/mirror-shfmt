@@ -68,7 +68,7 @@ platforms:
       - image: ubuntu:24.04
         shell: bash
   darwin/amd64:
-    runner: macos-13
+    runner: macos-14  # Rosetta2 emulates x86_64 (macos-13 deprecated Sep 2026)
   darwin/arm64:
     runner: macos-14
   windows/amd64:

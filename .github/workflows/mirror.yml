@@ -40,6 +40,7 @@ jobs:
         run: |
           set -euo pipefail
           ARCH=$(uname -m)
+          [ "${ARCH}" = "arm64" ] && ARCH=aarch64
           TAG="v0.2.1"
           EXT="tar.xz"
           TARGET="${ARCH}-unknown-linux-gnu"
@@ -51,7 +52,7 @@ jobs:
               --output "${RUNNER_TEMP}/ocx-host.${EXT}"
           fi
           mkdir -p "${RUNNER_TEMP}/ocx-host"
-          tar -xJf "${RUNNER_TEMP}/ocx-host.${EXT}" -C "${RUNNER_TEMP}/ocx-host"
+          tar -xJf "${RUNNER_TEMP}/ocx-host.${EXT}" -C "${RUNNER_TEMP}/ocx-host" --strip-components=1
           echo "${RUNNER_TEMP}/ocx-host" >> "${GITHUB_PATH}"
         env:
           GH_TOKEN: ${{ github.token }}
@@ -83,6 +84,7 @@ jobs:
         run: |
           set -euo pipefail
           ARCH=$(uname -m)
+          [ "${ARCH}" = "arm64" ] && ARCH=aarch64
           TAG="v0.2.1"
           EXT="tar.xz"
           TARGET="${ARCH}-unknown-linux-gnu"
@@ -94,7 +96,7 @@ jobs:
               --output "${RUNNER_TEMP}/ocx-host.${EXT}"
           fi
           mkdir -p "${RUNNER_TEMP}/ocx-host"
-          tar -xJf "${RUNNER_TEMP}/ocx-host.${EXT}" -C "${RUNNER_TEMP}/ocx-host"
+          tar -xJf "${RUNNER_TEMP}/ocx-host.${EXT}" -C "${RUNNER_TEMP}/ocx-host" --strip-components=1
           echo "${RUNNER_TEMP}/ocx-host" >> "${GITHUB_PATH}"
         env:
           GH_TOKEN: ${{ github.token }}
@@ -116,7 +118,7 @@ jobs:
         include:
           - platform: darwin/amd64
             platform_slug: darwin_amd64
-            runner: macos-13
+            runner: macos-14
             container_id: _native_
             shell: bash
             tests:
@@ -182,6 +184,7 @@ jobs:
         run: |
           set -euo pipefail
           ARCH=$(uname -m)
+          [ "${ARCH}" = "arm64" ] && ARCH=aarch64
           TAG="v0.2.1"
           case "${RUNNER_OS}" in
             Linux)
@@ -208,7 +211,7 @@ jobs:
           if [ "${EXT}" = "zip" ]; then
             unzip -q "${RUNNER_TEMP}/ocx-host.${EXT}" -d "${RUNNER_TEMP}/ocx-host"
           else
-            tar -xJf "${RUNNER_TEMP}/ocx-host.${EXT}" -C "${RUNNER_TEMP}/ocx-host"
+            tar -xJf "${RUNNER_TEMP}/ocx-host.${EXT}" -C "${RUNNER_TEMP}/ocx-host" --strip-components=1
           fi
           echo "${RUNNER_TEMP}/ocx-host" >> "${GITHUB_PATH}"
         env:
@@ -218,6 +221,7 @@ jobs:
         run: |
           set -euo pipefail
           ARCH=$(uname -m)
+          [ "${ARCH}" = "arm64" ] && ARCH=aarch64
           TAG="v0.2.1"
           if [ -n "${OCX_BINARY_OVERRIDE_MUSL:-}" ]; then
             cp "${OCX_BINARY_OVERRIDE_MUSL}" "${RUNNER_TEMP}/ocx-musl.tar.xz"
@@ -227,7 +231,7 @@ jobs:
               --output "${RUNNER_TEMP}/ocx-musl.tar.xz"
           fi
           mkdir -p "${RUNNER_TEMP}/ocx-musl"
-          tar -xJf "${RUNNER_TEMP}/ocx-musl.tar.xz" -C "${RUNNER_TEMP}/ocx-musl"
+          tar -xJf "${RUNNER_TEMP}/ocx-musl.tar.xz" -C "${RUNNER_TEMP}/ocx-musl" --strip-components=1
           cat > "${RUNNER_TEMP}/ocx-musl/Dockerfile" <<'DOCKERFILE'
           ARG BASE_IMAGE
           FROM ${BASE_IMAGE}
@@ -242,6 +246,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
       - name: Run tests for all versions
+        shell: bash
         run: |
           set -euo pipefail
           VERSIONS='${{ needs.discover.outputs.versions }}'
@@ -298,6 +303,7 @@ jobs:
         run: |
           set -euo pipefail
           ARCH=$(uname -m)
+          [ "${ARCH}" = "arm64" ] && ARCH=aarch64
           TAG="v0.2.1"
           EXT="tar.xz"
           TARGET="${ARCH}-unknown-linux-gnu"
@@ -309,7 +315,7 @@ jobs:
               --output "${RUNNER_TEMP}/ocx-host.${EXT}"
           fi
           mkdir -p "${RUNNER_TEMP}/ocx-host"
-          tar -xJf "${RUNNER_TEMP}/ocx-host.${EXT}" -C "${RUNNER_TEMP}/ocx-host"
+          tar -xJf "${RUNNER_TEMP}/ocx-host.${EXT}" -C "${RUNNER_TEMP}/ocx-host" --strip-components=1
           echo "${RUNNER_TEMP}/ocx-host" >> "${GITHUB_PATH}"
         env:
           GH_TOKEN: ${{ github.token }}
