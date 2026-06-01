@@ -34,9 +34,6 @@ build_timestamp: none
 
 versions:
   min: "3.5.0"
-  # Bumped from 1 → 5 so a single run backfills the most recent five
-  # versions; subsequent runs trickle older ones in via `backfill: newest_first`
-  # (default). Saves chunks of round-trip latency while still bounded.
   new_per_run: 5
   poll_interval: "0 */6 * * *"
 
@@ -51,38 +48,24 @@ concurrency:
   max_retries: 3
   compression_threads: 0
 
-# ── Test pipeline (S1–S10) ─────────────────────────────────────────────────
-
 tests:
-  - name: version
-    command: shfmt --version
+  - name: smoke
+    script: tests/smoke.star
 
 platforms:
-  # All 4 native platforms + linux containers. Alpine container leg covers
-  # the musl-libc surface; macos-14 carries Rosetta2 to emulate x86_64
-  # (macos-13 deprecated Sep 2026).
   linux/amd64:
     runner: ubuntu-latest
-    containers:
-      - image: ubuntu:24.04
-        shell: bash
-      - image: alpine:3.20
-        shell: sh
   linux/arm64:
     runner: ubuntu-24.04-arm
-    containers:
-      - image: ubuntu:24.04
-        shell: bash
   darwin/amd64:
-    runner: macos-14
+    runner: macos-latest
+    prefix: ["arch", "-x86_64"]
   darwin/arm64:
-    runner: macos-14
+    runner: macos-latest
+    shell: bash
   windows/amd64:
     runner: windows-latest
     shell: pwsh
-
-ocx_mirror:
-  release_tag: v0.2.1
 
 notify:
   discord:
