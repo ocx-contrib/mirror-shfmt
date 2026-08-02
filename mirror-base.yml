@@ -1,0 +1,112 @@
+# Shared base for every spec in this repository (mvdan's shell tooling).
+#
+# NOT a spec: it has no name/target/source and is never loaded on its own.
+# Everything a package owns — name, target, source, assets, asset_type,
+# metadata, catalog, tests, versions, announce, annotations — stays in that
+# package's own mirror.yml.
+#
+# ⚠️ `extends:` is a SHALLOW merge of top-level keys. A spec that sets a key
+# below replaces that block OUTRIGHT — there is no per-key merge. `platforms:`
+# is where this bites: it carries BOTH the runner matrix and the container
+# legs, so a child that restates it to tweak one runner silently drops every
+# `containers:` entry. Nothing reds — the legs simply stop existing, and every
+# os.features claim in that spec goes back to being merely asserted. Restate
+# `platforms:` IN FULL or not at all.
+
+skip_prereleases: true
+cascade: true
+
+# Carried over deliberately from this repo's pre-grouped spec, and NOT the
+# `date` that mirror-github/mirror-astral-sh set. `none` is the documented
+# fleet default; the trade-off it accepts is that re-publishing an already
+# published version reuses the bare version tag and orphans the prior digest
+# for registry GC, which would break a consumer's `@sha256:` pin. shfmt is a
+# slow-moving, bare-semver upstream that this mirror has never had to
+# re-publish, so nothing has ever depended on that. Switching to `date` is a
+# safe one-line change if a re-publish is ever needed.
+build_timestamp: none
+
+verify:
+  github_asset_digest: true
+
+concurrency:
+  # Assets are ~3-6 MB single static binaries — no archive to unpack.
+  max_downloads: 8
+  max_bundles: 4
+  max_pushes: 2
+  rate_limit_ms: 100
+  max_retries: 3
+  compression_threads: 0
+
+# `off` is FORCED here, not a preference. Every spec in this repo is an
+# `asset_type: binary` mirror: the single executable IS the bundle content
+# root, so metadata.json's PATH is a bare `${installPath}`. The scan only looks
+# BELOW the content root, so with no `${installPath}/<subdir>` entry it would
+# inspect no file — and `verify`/`auto` are rejected at spec load rather than
+# passing green over an unread tree:
+#
+#   $ ocx-mirror package validate shfmt/mirror.yml
+#   ERROR invalid mirror spec:
+#     - bin_scan: bin_scan is enabled but metadata.json declares no
+#       interface-visible ${installPath}/<dir> PATH entry …
+#   EXIT=65
+#
+# Do NOT "fix" that by inventing a bin/ subdirectory — the layout would stop
+# matching what upstream ships. The interface is one binary on every platform,
+# so each metadata.json declares `binaries` by hand instead; the smoke test is
+# what proves the name actually resolves on the composed PATH.
+bin_scan: off
+
+# ─── Platform matrix ────────────────────────────────────────────────────────
+#
+# `os.features` states what an artifact REQUIRES OF THE HOST — it is not a
+# label for how it was built. shfmt is a pure-Go binary built without cgo, so
+# upstream ships ONE Linux build per arch and it is fully static: no PT_INTERP,
+# no DT_NEEDED on either arch (evidence above shfmt/mirror.yml's `assets:`).
+# It requires nothing, so both Linux keys are BARE. Tagging them `+libc.musl`
+# would be a false requirement that hid them from every glibc host.
+#
+# A bare key claims universality, so it must prove it: ubuntu (glibc) + alpine
+# (musl) + fedora (different glibc vintage). The alpine leg IS the proof —
+# drop it and the universal claim is merely asserted.
+#
+# A future package here whose libc measurement differs must restate this whole
+# block in its own spec — see the shallow-merge warning at the top.
+platforms:
+  linux/amd64:
+    runner: ubuntu-latest
+    containers:
+      - { image: "ubuntu:24.04", shell: bash }
+      - { image: "alpine:3.20",  shell: sh }
+      - { image: "fedora:40",    shell: bash }
+  linux/arm64:
+    # arm64 container legs run natively — no qemu — so the runner arch must
+    # match the platform or the renderer reds the leg up front.
+    runner: ubuntu-24.04-arm
+    containers:
+      - { image: "ubuntu:24.04", shell: bash }
+      - { image: "alpine:3.20",  shell: sh }
+      - { image: "fedora:40",    shell: bash }
+  darwin/amd64:
+    # Intel slice tested on the arm64 macos-14 runner via Rosetta 2 — GitHub's
+    # native macos-13 Intel pool is exhausted and deadlocks the push job.
+    runner: macos-14
+    prefix: ["arch", "-x86_64"]
+  darwin/arm64:
+    runner: macos-14
+    shell: bash
+  windows/amd64:
+    runner: windows-latest
+    shell: pwsh
+  # No `windows/arm64`: upstream ships only `windows_386.exe` and
+  # `windows_amd64.exe` — verified at both v3.5.0 (the floor) and v3.13.1.
+  # Declaring it would match zero assets, which is SILENTLY SKIPPED, not an
+  # error — a green run with a missing platform.
+  #
+  # No `containers:` on darwin or windows — those runners have no Linux
+  # container engine, and the key is rejected at spec load.
+
+notify:
+  discord:
+    webhook_secret: OCX_MIRROR_DISCORD_HOOK
+    user_id: "227748867204972545"  # pinged in-message on failures

@@ -1,0 +1,108 @@
+extends: ../mirror-base.yml
+
+name: shfmt
+
+# Logical index package `shfmt/shfmt` at the physical path
+# `ghcr.io/ocx-contrib/shfmt/shfmt` — slash segments, never hyphen-flattened.
+# The first segment must be this repo's own GitHub owner: GITHUB_TOKEN only
+# authorises packages owned by the repo the workflow runs in.
+#
+# Tool-as-namespace: the namespace is always two segments, and `mvdan` is a
+# personal handle, not a vendor — so the tool names itself. The upstream REPO
+# is `mvdan/sh` (the Go module `mvdan.cc/sh/v3` ships a shell parser library
+# plus the `shfmt` command); the published TOOL is `shfmt`. Provenance lives in
+# `upstream`, not in the coordinate.
+#
+# Succeeds the flat `ocx.sh/shfmt` coordinate this repository published before
+# the grouped layout, the same way mirror-kitware/cmake succeeds mirror-cmake.
+target:
+  registry: ghcr.io
+  repository: ocx-contrib/shfmt/shfmt
+
+source:
+  type: github_release
+  owner: mvdan
+  repo: sh
+  tag_pattern: "^v(?P<version>\\d+\\.\\d+\\.\\d+)$"
+
+# ─── libc gate (Phase 3.5) — the evidence, not the conclusion ───────────────
+#
+# shfmt is a pure-Go binary built without cgo, so upstream ships ONE Linux
+# build per arch and it is fully static. Byte-audited 2026-08-01
+# (.claude/libc-audit-2026-08-01.json at the fleet root):
+#
+#   shfmt_v3.13.1_linux_amd64 → ELF 64-bit LSB executable, x86-64,
+#                               statically linked — no PT_INTERP, no DT_NEEDED
+#   shfmt_v3.13.1_linux_arm64 → ELF 64-bit LSB executable, ARM aarch64,
+#                               statically linked — no PT_INTERP, no DT_NEEDED
+#
+# No PT_INTERP and no DT_NEEDED means the artifact requires nothing of the
+# host, so both Linux keys are BARE — no `+libc.*` suffix. Upstream publishes
+# no musl/glibc variant split, so there is no counterpart to split against.
+# Container legs (ubuntu + alpine + fedora) live in ../mirror-base.yml and are
+# what turn that claim into evidence.
+#
+# ─── Scope (verified against v3.5.0, the floor, and v3.13.1) ────────────────
+#
+# Upstream publishes raw per-platform binaries — no archive, no checksums
+# sidecar. It also ships, and this mirror deliberately does not carry:
+#   linux_386, linux_arm (armv6), windows_386.exe   — no GHA runner
+#
+# There is no `windows_arm64` asset at either end of the range, which is why
+# ../mirror-base.yml declares no such platform: a pattern matching zero assets
+# is SILENTLY SKIPPED, not an error, so it would yield a green run with a
+# missing platform. Resolution verified BOTH ways at both versions — each of
+# the five patterns below matches EXACTLY one asset. The `$` anchor is what
+# keeps `_linux_arm` out of the `_linux_arm64` key.
+assets:
+  linux/amd64:
+    - "shfmt_v.*_linux_amd64$"
+  linux/arm64:
+    - "shfmt_v.*_linux_arm64$"
+  darwin/amd64:
+    - "shfmt_v.*_darwin_amd64$"
+  darwin/arm64:
+    - "shfmt_v.*_darwin_arm64$"
+  windows/amd64:
+    - "shfmt_v.*_windows_amd64\\.exe$"
+
+# A RAW BINARY, not an archive: the asset IS the executable, and its filename
+# carries the version and platform (`shfmt_v3.13.1_linux_amd64`). `name:`
+# normalises that to the command a consumer actually types — `shfmt` — at the
+# bundle content root. The `.exe` suffix is re-applied on Windows targets, so
+# the Windows bundle exposes `shfmt.exe` (what tests/smoke.star runs there).
+asset_type:
+  type: binary
+  name: shfmt
+
+metadata:
+  default: metadata.json
+
+catalog:
+  # Resolves against THIS spec's directory. `logo.png` (512px) is the only
+  # logo this mirror has ever carried — there is no `logo.svg` source to
+  # derive it from, and `ocx package describe` takes PNG or SVG.
+  logo: logo.png
+
+versions:
+  min: "3.5.0"
+  new_per_run: 5
+  poll_interval: "0 */6 * * *"
+
+tests:
+  # `script:` resolves from the REPOSITORY ROOT — unlike `metadata.default` and
+  # `catalog.logo` above, which resolve against this spec's own directory.
+  - name: smoke
+    script: shfmt/tests/smoke.star
+
+annotations:
+  # From the Phase 1.5 license gate:
+  #   $ gh api repos/mvdan/sh/license --jq '.license.spdx_id'
+  #   BSD-3-Clause
+  org.opencontainers.image.licenses: "BSD-3-Clause"
+
+announce:
+  # Spelled out, not derived from target.repository — the logical name and the
+  # physical path are related by convention only.
+  package: shfmt/shfmt
+  fork: ocx-contrib/index

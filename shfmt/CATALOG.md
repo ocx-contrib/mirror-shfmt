@@ -1,0 +1,27 @@
+---
+title: shfmt
+description: A shell parser and formatter with POSIX shell, Bash, and mksh support
+keywords: shfmt,shell,bash,mksh,posix,formatter,parser,sh,format,lint
+---
+
+# shfmt
+
+shfmt formats shell programs. It supports POSIX shell, Bash, and mksh, and
+enforces a consistent style across scripts with configurable indentation,
+binary-operator placement, and other print options. `-l` lists files whose
+formatting differs, `-d` prints the diff, and `-w` rewrites in place — the
+combination that makes it usable both as an editor formatter and as a CI gate.
+
+It is the command shipped by the Go module [`mvdan.cc/sh/v3`][mod], whose
+parser can also be used as a library for shell-script analysis and rewriting.
+
+## What's included
+
+- **shfmt** — shell script formatter and parser
+
+## Links
+
+- [shfmt documentation][mod]
+- [shfmt on GitHub](https://github.com/mvdan/sh) — the repository is `mvdan/sh`
+
+[mod]: https://pkg.go.dev/mvdan.cc/sh/v3
